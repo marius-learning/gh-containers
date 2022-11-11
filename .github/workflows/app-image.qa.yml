@@ -50,9 +50,7 @@ jobs:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
     steps:
       - id: image-tag
-        run: |
-          export IMAGE_TAG=${COMMIT_SHA::8}
-          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_OUTPUT
+        run: echo "IMAGE_TAG=$(echo $COMMIT_SHA | cut -c 1-8)" >> $GITHUB_ENV
       - name: Get Code
         uses: actions/checkout@v3
       - name: Build Image
