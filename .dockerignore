@@ -1,0 +1,7 @@
+.github
+.vscode
+tests
+
+Dockerfile
+.gitignore
+playwright.config.js
