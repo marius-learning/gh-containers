@@ -21,7 +21,7 @@ jobs:
       CI: true
       MONGODB_USERNAME: root
       MONGODB_PASSWORD: password
-      MONGODB_CLUSTER_ADDRESS: mongodb
+      MONGODB_CLUSTER_ADDRESS: localhost
       MONGODB_CONNECTION_PROTOCOL: mongodb
     services:
       mongodb:
@@ -29,6 +29,8 @@ jobs:
         env:
           MONGO_INITDB_ROOT_USERNAME: root
           MONGO_INITDB_ROOT_PASSWORD: password
+        ports:
+          - 27017:27017
     steps:
       - name: Setup NodeJS 16
         uses: actions/setup-node@v3
