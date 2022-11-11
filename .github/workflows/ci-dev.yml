@@ -19,6 +19,14 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CI: true
+      MONGODB_CLUSTER_ADDRESS: mongodb
+      MONGODB_CONNECTION_PROTOCOL: mongodb
+    services:
+      mongodb:
+        image: mongo:6.0
+        env:
+          MONGO_INITDB_ROOT_USERNAME: ${{ env.MONGODB_USERNAME }}
+          MONGO_INITDB_ROOT_PASSWORD: ${{ env.MONGODB_PASSWORD }}
     steps:
       - name: Setup NodeJS 16
         uses: actions/setup-node@v3
@@ -39,31 +47,31 @@ jobs:
       - name: Run Tests
         run: npm test
 
-  test-in-container:
-    environment: qa
-    runs-on: ubuntu-latest
-    container:
-      image: node:16
-      env:
-        CI: true
-      options: --cpus 1
-    steps:
-      - name: Print Environment Variables
-        run: echo "${{ toJSON(env) }}"
-      - name: Get Code
-        uses: actions/checkout@v3
-      - uses: actions/cache@v3
-        id: cache
-        with:
-          path: node_modules
-          key: "${{ hashFiles('package-lock.json') }}"
-      - name: Install Dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: npm ci
-      - name: Start Application
-        run: npm start & npx wait-on http://localhost:$PORT
-      - name: Run Tests
-        run: npm test
+  # test-in-container:
+  #   environment: qa
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     CI: true
+  #   container:
+  #     image: node:16
+  #     options: --cpus 1
+  #   steps:
+  #     - name: Print Environment Variables
+  #       run: echo "${{ toJSON(env) }}"
+  #     - name: Get Code
+  #       uses: actions/checkout@v3
+  #     - uses: actions/cache@v3
+  #       id: cache
+  #       with:
+  #         path: node_modules
+  #         key: "${{ hashFiles('package-lock.json') }}"
+  #     - name: Install Dependencies
+  #       if: steps.cache.outputs.cache-hit != 'true'
+  #       run: npm ci
+  #     - name: Start Application
+  #       run: npm start & npx wait-on http://localhost:$PORT
+  #     - name: Run Tests
+  #       run: npm test
 
   build-and-push:
     needs: [test]
