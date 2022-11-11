@@ -60,6 +60,8 @@ jobs:
       - name: Install Dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: npm ci
+      - name: Start Application
+        run: npm start & npx wait-on http://localhost:$PORT
       - name: Run Tests
         run: npm test
 
