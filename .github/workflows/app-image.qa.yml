@@ -18,8 +18,8 @@ env:
 
 jobs:
   test:
+    environmnet: qa
     runs-on: ubuntu-latest
-    environmnet: ${{ env.ENVIRONMENT }}
     steps:
       - name: Setup NodeJS 16
         uses: actions/setup-node@v3
@@ -63,8 +63,8 @@ jobs:
 
   push:
     needs: [build]
+    environment: qa
     runs-on: ubuntu-latest
-    environment: ${{ env.ENVIRONMENT }}
     env:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
     steps:
