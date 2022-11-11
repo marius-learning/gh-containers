@@ -1,0 +1,72 @@
+name: "CI DEV"
+on:
+  workflow_dispatch:
+
+env:
+  PORT: 3000
+  ENVIRONMENT: dev
+  IMAGE_NAME: node-app
+  MONGO_DB_NAME: events-dev
+  DOCKERHUB_USER: mariusmihai69
+  MONGODB_CONNECTION_PROTOCOL: mongodb+srv
+  MONGODB_USERNAME: ${{ secrets.MONGODB_USERNAME }}
+  MONGODB_PASSWORD: ${{ secrets.MONGODB_PASSWORD }}
+  MONGODB_CLUSTER_ADDRESS: ${{ secrets.MONGODB_CLUSTER_ADDRESS }}
+
+jobs:
+  test:
+    environment: qa
+    runs-on: ubuntu-latest
+    env:
+      CI: true
+    steps:
+      - name: Setup NodeJS 16
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Get Code
+        uses: actions/checkout@v3
+      - name: actions/cache@v3
+        id: cache
+        with:
+          path: node_modules
+          key: "${{ hashFiles('package-lock.json') }}"
+      - name: Install Dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: npm ci
+      - name: Start Application
+        run: npm start & npx wait-on http://localhost:$PORT
+      - name: Run Tests
+        run: npm test
+
+  build-and-push:
+    needs: [test]
+    environment: qa
+    runs-on: ubuntu-latest
+    env:
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+    steps:
+      - run: echo "IMAGE_TAG=$(echo $GITHUB_SHA | cut -c 1-8)" >> $GITHUB_ENV
+      - name: Get Code
+        uses: actions/checkout@v3
+      - name: Build Image
+        run: |
+          docker build \
+            --cache-from $DOCKERHUB_USER/$IMAGE_NAME:$ENVIRONMENT-latest \
+            -t $DOCKERHUB_USER/$IMAGE_NAME:$ENVIRONMENT-latest \
+            -t $DOCKERHUB_USER/$IMAGE_NAME:$ENVIRONMENT-$IMAGE_TAG \
+            --build-arg PORT=3000 \
+            --build-arg MONGO_DB_NAME=$MONGO_DB_NAME \
+            --build-arg MONGODB_PASSWORD=$MONGODB_PASSWORD \
+            --build-arg MONGODB_USERNAME=$MONGODB_USERNAME \
+            --build-arg MONGODB_CLUSTER_ADDRESS=$MONGODB_CLUSTER_ADDRESS \
+            --build-arg MONGODB_CONNECTION_PROTOCOL=$MONGODB_CONNECTION_PROTOCOL \
+            -f Dockerfile .
+      - name: DockerHub Login
+        run: echo $DOCKERHUB_TOKEN | docker login -u $DOCKERHUB_USER --password-stdin
+      - name: Push Image
+        run: |
+          docker push $DOCKERHUB_USER/$IMAGE_NAME:$ENVIRONMENT-latest
+          docker push $DOCKERHUB_USER/$IMAGE_NAME:$ENVIRONMENT-$IMAGE_TAG
+      - name: DockerHub Logout
+        run: docker logout
