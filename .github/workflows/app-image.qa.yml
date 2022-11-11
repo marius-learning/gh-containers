@@ -50,14 +50,16 @@ jobs:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
     steps:
       - id: image-tag
-        run: echo "IMAGE_TAG=$(echo $COMMIT_SHA | cut -c 1-8)" >> $GITHUB_ENV
+        run: |
+          export IMAGE_TAG=${COMMIT_SHA::8}
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_OUTPUT
       - name: Get Code
         uses: actions/checkout@v3
       - name: Build Image
         run: |
           docker build \
             -t $DOCKERHUB_USER/$IMAGE_NAME:$ENVIRONMENT-latest \
-            -t $DOCKERHUB_USER/$IMAGE_NAME:$ENVIRONMENT-$IMAGE_TAG \
+            -t $DOCKERHUB_USER/$IMAGE_NAME:$ENVIRONMENT-${{ steps.image-tag.outputs.IMAGE_TAG }} \
             --build-arg PORT=3000 \
             --build-arg MONGO_DB_NAME=$MONGO_DB_NAME \
             --build-arg MONGODB_PASSWORD=$MONGODB_PASSWORD \
@@ -69,7 +71,7 @@ jobs:
         run: echo $DOCKERHUB_TOKEN | docker login -u $DOCKERHUB_USER --password-stdin
       - name: Push Image
         run: |
-          docker push $DOCKERHUB_USER/$IMAGE_NAME:$ENVIRONMENT-$IMAGE_TAG
+          docker push $DOCKERHUB_USER/$IMAGE_NAME:$ENVIRONMENT-${{ steps.image-tag.outputs.IMAGE_TAG }}
           docker push $DOCKERHUB_USER/$IMAGE_NAME:$ENVIRONMENT-latest
       - name: DockerHub Logout
         run: docker logout
