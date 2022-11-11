@@ -15,18 +15,20 @@ env:
 
 jobs:
   test:
-    environment: qa
+    environment: dev
     runs-on: ubuntu-latest
     env:
       CI: true
+      MONGODB_USERNAME: root
+      MONGODB_PASSWORD: password
       MONGODB_CLUSTER_ADDRESS: mongodb
       MONGODB_CONNECTION_PROTOCOL: mongodb
     services:
       mongodb:
         image: mongo:6.0
         env:
-          MONGO_INITDB_ROOT_USERNAME: ${{ env.MONGODB_USERNAME }}
-          MONGO_INITDB_ROOT_PASSWORD: ${{ env.MONGODB_PASSWORD }}
+          MONGO_INITDB_ROOT_USERNAME: root
+          MONGO_INITDB_ROOT_PASSWORD: password
     steps:
       - name: Setup NodeJS 16
         uses: actions/setup-node@v3
@@ -48,7 +50,7 @@ jobs:
         run: npm test
 
   # test-in-container:
-  #   environment: qa
+  #   environment: dev
   #   runs-on: ubuntu-latest
   #   env:
   #     CI: true
@@ -75,7 +77,7 @@ jobs:
 
   build-and-push:
     needs: [test]
-    environment: qa
+    environment: dev
     runs-on: ubuntu-latest
     env:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
