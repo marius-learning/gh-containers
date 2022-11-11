@@ -51,6 +51,9 @@ jobs:
     steps:
       - id: image-tag
         run: echo "IMAGE_TAG=$(echo $GITHUB_SHA | cut -c 1-8)" >> $GITHUB_ENV
+      - id: test-output
+        run: echo "IMAGE=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
+      - run: echo "${{ toJSON(steps.test-output.outputs) }}"
       - name: Get Code
         uses: actions/checkout@v3
       - name: Build Image
